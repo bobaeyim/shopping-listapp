@@ -2,7 +2,7 @@
 
 import { create } from 'zustand'
 import { ShoppingItem } from '@/types'
-import { supabase } from '@/lib/supabase'
+import { getSupabase } from '@/lib/supabase'
 
 // 랜덤 ID 생성 함수
 const generateId = () => Math.random().toString(36).substring(2, 11)
@@ -41,7 +41,7 @@ export const useShoppingStore = create<ShoppingStore>()((set, get) => ({
   // DB에서 전체 아이템 조회 (생성 순 정렬)
   fetchItems: async () => {
     set({ loading: true })
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('shopping_items')
       .select('*')
       .order('created_at', { ascending: true })
@@ -73,7 +73,7 @@ export const useShoppingStore = create<ShoppingStore>()((set, get) => ({
     set((state) => ({ items: [...state.items, newItem] }))
 
     // 백그라운드 DB 삽입
-    supabase
+    getSupabase()
       .from('shopping_items')
       .insert({
         id: newItem.id,
@@ -99,7 +99,7 @@ export const useShoppingStore = create<ShoppingStore>()((set, get) => ({
     // 낙관적 업데이트
     set((state) => ({ items: state.items.filter((i) => i.id !== id) }))
 
-    supabase
+    getSupabase()
       .from('shopping_items')
       .delete()
       .eq('id', id)
@@ -126,7 +126,7 @@ export const useShoppingStore = create<ShoppingStore>()((set, get) => ({
       ),
     }))
 
-    supabase
+    getSupabase()
       .from('shopping_items')
       .update({ checked: newChecked })
       .eq('id', id)
@@ -151,7 +151,7 @@ export const useShoppingStore = create<ShoppingStore>()((set, get) => ({
     // 낙관적 업데이트
     set((state) => ({ items: state.items.filter((i) => !i.checked) }))
 
-    supabase
+    getSupabase()
       .from('shopping_items')
       .delete()
       .in('id', checkedIds)
