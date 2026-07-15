@@ -7,11 +7,21 @@ import { Badge } from '@/components/ui/badge'
 
 export function ShoppingList() {
   const items = useShoppingStore((state) => state.items)
+  const loading = useShoppingStore((state) => state.loading)
   const clearChecked = useShoppingStore((state) => state.clearChecked)
 
   // 미체크 / 체크 완료 아이템 분리
   const uncheckedItems = items.filter((item) => !item.checked)
   const checkedItems = items.filter((item) => item.checked)
+
+  // 로딩 중일 때
+  if (loading) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-gray-400 text-sm">불러오는 중...</p>
+      </div>
+    )
+  }
 
   // 전체 아이템이 없을 때
   if (items.length === 0) {

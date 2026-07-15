@@ -1,10 +1,19 @@
 'use client'
 
+import { useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { AddItemForm } from '@/components/AddItemForm'
 import { ShoppingList } from '@/components/ShoppingList'
+import { useShoppingStore } from '@/store/shoppingStore'
 
 export default function Home() {
+  const fetchItems = useShoppingStore((state) => state.fetchItems)
+
+  // 페이지 마운트 시 DB에서 아이템 로드
+  useEffect(() => {
+    fetchItems()
+  }, [fetchItems])
+
   return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <Card className="w-full max-w-md shadow-lg">
