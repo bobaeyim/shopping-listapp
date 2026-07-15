@@ -1,8 +1,7 @@
 'use client'
 
 import { create } from 'zustand'
-import { ShoppingItem } from '@/types'
-import { getSupabase } from '@/lib/supabase'
+import type { ShoppingItem } from '@/types'
 
 // 랜덤 ID 생성 함수
 const generateId = () => Math.random().toString(36).substring(2, 11)
@@ -41,21 +40,27 @@ export const useShoppingStore = create<ShoppingStore>()((set, get) => ({
   // DB에서 전체 아이템 조회 (생성 순 정렬)
   fetchItems: async () => {
     set({ loading: true })
-    const { data, error } = await getSupabase()
-      .from('shopping_items')
-      .select('*')
-      .order('created_at', { ascending: true })
+    try {
+      const { getSupabase } = await import('@/lib/supabase')
+      const { data, error } = await getSupabase()
+        .from('shopping_items')
+        .select('*')
+        .order('created_at', { ascending: true })
 
-    if (error) {
-      console.error('아이템 조회 실패:', error.message)
+      if (error) {
+        console.error('아이템 조회 실패:', error.message)
+        set({ loading: false })
+        return
+      }
+
+      set({
+        items: (data ?? []).map(rowToItem),
+        loading: false,
+      })
+    } catch (error) {
+      console.error('아이템 조회 중 오류:', error)
       set({ loading: false })
-      return
     }
-
-    set({
-      items: (data ?? []).map(rowToItem),
-      loading: false,
-    })
   },
 
   // 아이템 추가: 즉시 낙관적 업데이트 후 DB 동기화
@@ -73,23 +78,25 @@ export const useShoppingStore = create<ShoppingStore>()((set, get) => ({
     set((state) => ({ items: [...state.items, newItem] }))
 
     // 백그라운드 DB 삽입
-    getSupabase()
-      .from('shopping_items')
-      .insert({
-        id: newItem.id,
-        name: newItem.name,
-        checked: newItem.checked,
-        created_at: newItem.createdAt,
-      })
-      .then(({ error }) => {
-        if (error) {
-          // 삽입 실패 시 낙관적 업데이트 롤백
-          console.error('아이템 추가 실패:', error.message)
-          set((state) => ({
-            items: state.items.filter((i) => i.id !== newItem.id),
-          }))
-        }
-      })
+    import('@/lib/supabase').then(({ getSupabase }) => {
+      getSupabase()
+        .from('shopping_items')
+        .insert({
+          id: newItem.id,
+          name: newItem.name,
+          checked: newItem.checked,
+          created_at: newItem.createdAt,
+        })
+        .then(({ error }) => {
+          if (error) {
+            // 삽입 실패 시 낙관적 업데이트 롤백
+            console.error('아이템 추가 실패:', error.message)
+            set((state) => ({
+              items: state.items.filter((i) => i.id !== newItem.id),
+            }))
+          }
+        })
+    })
   },
 
   // 아이템 삭제: 낙관적 업데이트 후 DB 동기화
@@ -99,16 +106,18 @@ export const useShoppingStore = create<ShoppingStore>()((set, get) => ({
     // 낙관적 업데이트
     set((state) => ({ items: state.items.filter((i) => i.id !== id) }))
 
-    getSupabase()
-      .from('shopping_items')
-      .delete()
-      .eq('id', id)
-      .then(({ error }) => {
-        if (error) {
-          console.error('아이템 삭제 실패:', error.message)
-          set({ items: previous }) // 롤백
-        }
-      })
+    import('@/lib/supabase').then(({ getSupabase }) => {
+      getSupabase()
+        .from('shopping_items')
+        .delete()
+        .eq('id', id)
+        .then(({ error }) => {
+          if (error) {
+            console.error('아이템 삭제 실패:', error.message)
+            set({ items: previous }) // 롤백
+          }
+        })
+    })
   },
 
   // 체크 상태 토글: 낙관적 업데이트 후 DB 동기화
@@ -126,16 +135,18 @@ export const useShoppingStore = create<ShoppingStore>()((set, get) => ({
       ),
     }))
 
-    getSupabase()
-      .from('shopping_items')
-      .update({ checked: newChecked })
-      .eq('id', id)
-      .then(({ error }) => {
-        if (error) {
-          console.error('토글 실패:', error.message)
-          set({ items: previous }) // 롤백
-        }
-      })
+    import('@/lib/supabase').then(({ getSupabase }) => {
+      getSupabase()
+        .from('shopping_items')
+        .update({ checked: newChecked })
+        .eq('id', id)
+        .then(({ error }) => {
+          if (error) {
+            console.error('토글 실패:', error.message)
+            set({ items: previous }) // 롤백
+          }
+        })
+    })
   },
 
   // 체크된 항목 전체 삭제: 낙관적 업데이트 후 DB 동기화
@@ -151,15 +162,17 @@ export const useShoppingStore = create<ShoppingStore>()((set, get) => ({
     // 낙관적 업데이트
     set((state) => ({ items: state.items.filter((i) => !i.checked) }))
 
-    getSupabase()
-      .from('shopping_items')
-      .delete()
-      .in('id', checkedIds)
-      .then(({ error }) => {
-        if (error) {
-          console.error('체크 항목 삭제 실패:', error.message)
-          set({ items: previous }) // 롤백
-        }
-      })
+    import('@/lib/supabase').then(({ getSupabase }) => {
+      getSupabase()
+        .from('shopping_items')
+        .delete()
+        .in('id', checkedIds)
+        .then(({ error }) => {
+          if (error) {
+            console.error('체크 항목 삭제 실패:', error.message)
+            set({ items: previous }) // 롤백
+          }
+        })
+    })
   },
 }))
