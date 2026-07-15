@@ -80,21 +80,35 @@ export const useShoppingStore = create<ShoppingStore>()((set, get) => ({
     // 백그라운드 DB 삽입
     import('@/lib/supabase').then(({ getSupabase }) => {
       getSupabase()
-        .from('shopping_items')
-        .insert({
-          id: newItem.id,
-          name: newItem.name,
-          checked: newItem.checked,
-          created_at: newItem.createdAt,
-        })
-        .then(({ error }) => {
-          if (error) {
-            // 삽입 실패 시 낙관적 업데이트 롤백
-            console.error('아이템 추가 실패:', error.message)
+        .auth.getUser()
+        .then(({ data: { user } }) => {
+          if (!user) {
+            // 비인증 상태면 아이템 추가 중단
+            console.error('인증되지 않은 사용자입니다')
             set((state) => ({
               items: state.items.filter((i) => i.id !== newItem.id),
             }))
+            return
           }
+
+          getSupabase()
+            .from('shopping_items')
+            .insert({
+              id: newItem.id,
+              name: newItem.name,
+              checked: newItem.checked,
+              created_at: newItem.createdAt,
+              user_id: user.id,
+            })
+            .then(({ error }) => {
+              if (error) {
+                // 삽입 실패 시 낙관적 업데이트 롤백
+                console.error('아이템 추가 실패:', error.message)
+                set((state) => ({
+                  items: state.items.filter((i) => i.id !== newItem.id),
+                }))
+              }
+            })
         })
     })
   },

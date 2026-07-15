@@ -1,5 +1,6 @@
 // Supabase 클라이언트 싱글톤 (지연 생성)
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import type { Profile } from '@/types'
 
 let supabaseInstance: SupabaseClient | null = null
 
@@ -17,4 +18,29 @@ export function getSupabase(): SupabaseClient {
   }
 
   return supabaseInstance
+}
+
+// 사용자 프로필 조회
+export async function getProfile(userId: string): Promise<Profile | null> {
+  try {
+    const { data, error } = await getSupabase()
+      .from('profiles')
+      .select('id, nickname, created_at')
+      .eq('id', userId)
+      .single()
+
+    if (error || !data) {
+      console.error('프로필 조회 실패:', error?.message)
+      return null
+    }
+
+    return {
+      id: data.id,
+      nickname: data.nickname,
+      createdAt: data.created_at,
+    }
+  } catch (error) {
+    console.error('프로필 조회 중 오류:', error)
+    return null
+  }
 }
