@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>쇼핑 리스트 앱</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+      background: linear-gradient(135deg, #dbeafe 0%, #e0e7ff 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .container {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 400px;
+      overflow: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
+      padding: 1.5rem;
+      color: white;
+      text-align: center;
+    }
+
+    .header h1 {
+      font-size: 1.75rem;
+      font-weight: 600;
+    }
+
+    .content {
+      padding: 1.5rem;
+    }
+
+    .form-group {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      padding: 0.75rem;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      transition: border-color 0.2s;
+    }
+
+    input[type="text"]:focus {
+      outline: none;
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    button {
+      padding: 0.75rem 1.25rem;
+      background: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    button:hover {
+      background: #1d4ed8;
+    }
+
+    button:disabled {
+      background: #d1d5db;
+      cursor: not-allowed;
+    }
+
+    .list-container {
+      min-height: 200px;
+    }
+
+    .empty-state {
+      text-align: center;
+      color: #9ca3af;
+      padding: 2rem 0;
+      font-size: 0.9rem;
+    }
+
+    .section {
+      margin-bottom: 1.5rem;
+    }
+
+    .section-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #4b5563;
+      margin-bottom: 0.75rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .clear-btn {
+      font-size: 0.75rem;
+      padding: 0.35rem 0.75rem;
+      background: transparent;
+      color: #9ca3af;
+      border: 1px solid #e5e7eb;
+    }
+
+    .clear-btn:hover {
+      color: #ef4444;
+      border-color: #fecaca;
+      background: #fef2f2;
+    }
+
+    .item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      margin-bottom: 0.5rem;
+      transition: all 0.2s;
+    }
+
+    .item:hover {
+      border-color: #d1d5db;
+      background: #f3f4f6;
+    }
+
+    .item.checked {
+      opacity: 0.6;
+    }
+
+    .item input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+    }
+
+    .item-text {
+      flex: 1;
+      font-size: 0.95rem;
+      color: #1f2937;
+      word-break: break-word;
+    }
+
+    .item.checked .item-text {
+      text-decoration: line-through;
+      color: #9ca3af;
+    }
+
+    .item-delete {
+      background: transparent;
+      color: #ef4444;
+      padding: 0.35rem;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+      font-size: 1.1rem;
+    }
+
+    .item-delete:hover {
+      background: #fee2e2;
+      color: #dc2626;
+    }
+
+    .completed-section {
+      opacity: 0.7;
+    }
+
+    .progress-section {
+      padding-top: 1rem;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    .progress-label {
+      font-size: 0.8rem;
+      color: #6b7280;
+      margin-bottom: 0.5rem;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: #e5e7eb;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: #10b981;
+      transition: width 0.3s;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🛒 쇼핑 리스트</h1>
+    </div>
+
+    <div class="content">
+      <!-- 입력 폼 -->
+      <div class="form-group">
+        <input
+          type="text"
+          id="itemInput"
+          placeholder="쇼핑 항목을 입력하세요..."
+          autocomplete="off"
+        />
+        <button id="addBtn">추가</button>
+      </div>
+
+      <!-- 리스트 -->
+      <div class="list-container" id="listContainer">
+        <div class="empty-state">
+          쇼핑 항목을 추가해 보세요 📝
+        </div>
+      </div>
+
+      <!-- 진행률 -->
+      <div class="progress-section" id="progressSection" style="display: none;">
+        <div class="progress-label">
+          <span>진행률</span>
+          <span id="progressText">0/0</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 쇼핑 리스트 관리
+    class ShoppingList {
+      constructor() {
+        this.items = this.loadFromStorage();
+        this.input = document.getElementById('itemInput');
+        this.addBtn = document.getElementById('addBtn');
+        this.listContainer = document.getElementById('listContainer');
+        this.progressSection = document.getElementById('progressSection');
+        this.progressText = document.getElementById('progressText');
+        this.progressFill = document.getElementById('progressFill');
+
+        this.setupEventListeners();
+        this.render();
+      }
+
+      setupEventListeners() {
+        this.addBtn.addEventListener('click', () => this.addItem());
+        this.input.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            this.addItem();
+          }
+        });
+      }
+
+      addItem() {
+        const name = this.input.value.trim();
+        if (!name) return;
+
+        const item = {
+          id: Math.random().toString(36).substring(2, 11),
+          name: name,
+          checked: false,
+          createdAt: Date.now(),
+        };
+
+        this.items.push(item);
+        this.input.value = '';
+        this.saveToStorage();
+        this.render();
+        this.input.focus();
+      }
+
+      removeItem(id) {
+        this.items = this.items.filter((item) => item.id !== id);
+        this.saveToStorage();
+        this.render();
+      }
+
+      toggleItem(id) {
+        const item = this.items.find((item) => item.id === id);
+        if (item) {
+          item.checked = !item.checked;
+          this.saveToStorage();
+          this.render();
+        }
+      }
+
+      clearChecked() {
+        this.items = this.items.filter((item) => !item.checked);
+        this.saveToStorage();
+        this.render();
+      }
+
+      saveToStorage() {
+        localStorage.setItem('shopping-list', JSON.stringify(this.items));
+      }
+
+      loadFromStorage() {
+        const stored = localStorage.getItem('shopping-list');
+        return stored ? JSON.parse(stored) : [];
+      }
+
+      render() {
+        const unchecked = this.items.filter((item) => !item.checked);
+        const checked = this.items.filter((item) => item.checked);
+
+        // 비어있는지 확인
+        if (this.items.length === 0) {
+          this.listContainer.innerHTML = '<div class="empty-state">쇼핑 항목을 추가해 보세요 📝</div>';
+          this.progressSection.style.display = 'none';
+          this.addBtn.disabled = true;
+          return;
+        }
+
+        this.addBtn.disabled = false;
+
+        let html = '';
+
+        // 할 일 섹션
+        if (unchecked.length > 0) {
+          html += `
+            <div class="section">
+              <div class="section-title">
+                <span>할 일 (${unchecked.length})</span>
+              </div>
+              ${unchecked.map((item) => this.renderItem(item)).join('')}
+            </div>
+          `;
+        }
+
+        // 완료됨 섹션
+        if (checked.length > 0) {
+          html += `
+            <div class="section completed-section">
+              <div class="section-title">
+                <span>완료됨 (${checked.length})</span>
+                <button class="clear-btn" onclick="app.clearChecked()">전부 삭제</button>
+              </div>
+              ${checked.map((item) => this.renderItem(item)).join('')}
+            </div>
+          `;
+        }
+
+        this.listContainer.innerHTML = html;
+
+        // 진행률 업데이트
+        this.progressSection.style.display = 'block';
+        const progress = (checked.length / this.items.length) * 100;
+        this.progressFill.style.width = progress + '%';
+        this.progressText.textContent = `${checked.length}/${this.items.length}`;
+      }
+
+      renderItem(item) {
+        return `
+          <div class="item ${item.checked ? 'checked' : ''}">
+            <input
+              type="checkbox"
+              ${item.checked ? 'checked' : ''}
+              onchange="app.toggleItem('${item.id}')"
+            />
+            <span class="item-text">${this.escapeHtml(item.name)}</span>
+            <button class="item-delete" onclick="app.removeItem('${item.id}')">✕</button>
+          </div>
+        `;
+      }
+
+      escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      }
+    }
+
+    // 앱 초기화
+    const app = new ShoppingList();
+  </script>
+</body>
+</html>
